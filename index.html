@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Логистическая компания Сталинград | Диспетчеризация и поиск грузов для дальнобойщиков</title>
+    <style>
+        /* Общие стили и сброс */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-main: #1a1a1a;
+            --bg-dark: #121212;
+            --bg-card: #242424;
+            --accent-terracotta: #b84a2c;
+            --accent-terracotta-hover: #9c3b21;
+            --accent-gold: #d4af37;
+            --text-light: #ffffff;
+            --text-gray: #b3b3b3;
+            --text-dark: #1a1a1a;
+            --border-industrial: #3a3a3a;
+            --font-headers: 'Arial Black', 'Impact', 'Trebuchet MS', sans-serif;
+            --font-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Индустриальные элементы (заклепки, грубые рамки, текстуры) */
+        .industrial-border {
+            border: 2px solid var(--border-industrial);
+            position: relative;
+            background: linear-gradient(135deg, #222 0%, #1a1a1a 100%);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .industrial-border::before, .industrial-border::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #444;
+            border-radius: 50%;
+            box-shadow: 0 0 2px #000;
+        }
+        .industrial-border::before { top: 5px; left: 5px; }
+        .industrial-border::after { bottom: 5px; right: 5px; }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        h1, h2, h3 {
+            font-family: var(--font-headers);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Кнопки */
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            font-family: var(--font-headers);
+            font-size: 14px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+        }
+
+        .btn-terracotta {
+            background-color: var(--accent-terracotta);
+            color: var(--text-light);
+            border-bottom: 3px solid #7c2f1a;
+        }
+
+        .btn-terracotta:hover {
+            background-color: var(--accent-terracotta-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-gold {
+            background-color: var(--accent-gold);
+            color: var(--text-dark);
+            border-bottom: 3px solid #a38323;
+        }
+
+        .btn-gold:hover {
+            background-color: #bd9a2d;
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Шапка сайта */
+        header {
+            background-color: var(--bg-dark);
+            border-bottom: 3px solid var(--accent-terracotta);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo {
+            font-family: var(--font-headers);
+            font-size: 24px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            color: var(--accent-terracotta);
+        }
+
+        .header-contacts {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .phone-link {
+            color: var(--accent-gold);
+            font-family: var(--font-headers);
+            font-size: 18px;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .phone-link:hover {
+            color: var(--text-light);
+        }
+
+        /* Блок Герой (Hero) */
+        .hero {
+            position: relative;
+            padding: 120px 0;
+            background: linear-gradient(rgba(26, 26, 26, 0.85), rgba(26, 26, 26, 0.95)), 
+                        url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=1200') no-repeat center center;
+            background-size: cover;
+            border-bottom: 1px solid var(--border-industrial);
+            overflow: hidden;
+        }
+
+        /* Стилизация луча света от фары */
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 30%;
+            right: -10%;
+            width: 60%;
+            height: 40%;
+            background: max-gradient(rgba(212, 175, 55, 0.15), transparent);
+            transform: rotate(-15deg);
+            pointer-events: none;
+            filter: blur(40px);
+        }
+
+        .hero-content {
+            max-width: 650px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: var(--text-light);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .hero h1 mark {
+            background: none;
+            color: var(--accent-terracotta);
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-gray);
+            margin-bottom: 35px;
+            border-left: 4px solid var(--accent-gold);
+            padding-left: 15px;
+        }
+
+        /* Блок Почему мы */
+        .features {
+            padding: 80px 0;
+            background-color: var(--bg-main);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 50px;
+            position: relative;
+            color: var(--text-light);
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background-color: var(--accent-terracotta);
+            margin: 15px auto 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            padding: 40px 30px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--text-light);
+        }
+
+        .feature-card p {
+            color: var(--text-gray);
+            font-size: 15px;
+        }
+
+        /* Блок FAQ (Аккордеон) */
+        .faq {
+            padding: 80px 0;
+            background-color: var(--bg-dark);
+            border-top: 1px solid var(--border-industrial);
+            border-bottom: 1px solid var(--border-industrial);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 15px;
+            border: 1px solid var(--border-industrial);
+            background-color: var(--bg-main);
+        }
+
+        .faq-trigger {
+            width: 100%;
+            padding: 20px 25px;
+            background: none;
+            border: none;
+            text-align: left;
+            color: var(--text-light);
+            font-family: var(--font-body);
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        .faq-trigger:hover {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .faq-icon {
+            font-size: 20px;
+            color: var(--accent-terracotta);
+            transition: transform 0.3s;
+            font-family: monospace;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(45deg);
+            color: var(--accent-gold);
+        }
+
+        .faq-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .faq-content-inner {
+            padding: 0 25px 20px 25px;
+            color: var(--text-gray);
+            font-size: 15px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+        }
+
+        /* Блок Формы заявки */
+        .order-form-section {
+            padding: 80px 0;
+            background: linear-gradient(rgba(18, 18, 18, 0.9), rgba(18, 18, 18, 0.9)),
+                        url('https://images.unsplash.com/photo-1516546453174-5f1000626902?auto=format&fit=crop&q=80&w=1200') no-repeat center center;
+            background-size: cover;
+        }
+
+        .form-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(0,0,0,0.5);
+            border: 1px solid var(--border-industrial);
+            color: var(--text-light);
+            font-family: var(--font-body);
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        select.form-control option {
+            background-color: var(--bg-main);
+            color: var(--text-light);
+        }
+
+        .form-wrapper .btn {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        /* Футер */
+        footer {
+            background-color: #0f0f0f;
+            padding: 50px 0 25px 0;
+            border-top: 4px solid var(--accent-terracotta);
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-col h4 {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-size: 16px;
+            border-left: 3px solid var(--accent-terracotta);
+            padding-left: 10px;
+        }
+
+        .footer-col p {
+            margin-bottom: 10px;
+        }
+
+        .footer-col a {
+            color: var(--text-gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-col a:hover {
+            color: var(--accent-gold);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border-industrial);
+            padding-top: 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .header-flex {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-contacts {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+            .hero {
+                padding: 60px 0;
+                text-align: center;
+            }
+            .hero h1 {
+                font-size: 30px;
+            }
+            .hero p {
+                border-left: none;
+                border-bottom: 2px solid var(--accent-gold);
+                padding-left: 0;
+                padding-bottom: 15px;
+            }
+            .form-wrapper {
+                padding: 25px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Шапка -->
+    <header>
+        <div class="container header-flex">
+            <div class="logo">
+                СТАЛИНГРАД<span>//</span>ЛОГИСТИКА
+            </div>
+            <div class="header-contacts">
+                <a href="tel:+78005553535" class="phone-link">8 (800) 555-35-35</a>
+                <a href="tel:+78005553535" class="btn btn-terracotta">Позвонить</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. Блок герой -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Найдём груз, пока ты <mark>за рулём</mark></h1>
+                <p>Логистическая компания "Сталинград" обеспечивает непрерывную диспетчеризацию. Помогаем дальнобойщикам быть в движении 24/7, зарабатывать больше и не простаивать впустую.</p>
+                <a href="#order" class="btn btn-gold">Взять груз в работу</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Блок 'Почему мы' -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Почему выбирают нас</h2>
+            <div class="features-grid">
+                
+                <div class="feature-card industrial-border">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Надёжность</h3>
+                    <p>Работаем только с проверенными и платёжеспособными грузовладельцами. Юридическая чистота сделок и гарантированная оплата каждого рейса точно в срок.</p>
+                </div>
+
+                <div class="feature-card industrial-border">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Скорость</h3>
+                    <p>Поиск и оформление подходящего груза под ваш тип кузова занимает до 30 минут. Никаких длительных простоев и пустых обратных пробегов.</p>
+                </div>
+
+                <div class="feature-card industrial-border">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Забота о водителе</h3>
+                    <p>Персональный логист на связи 24 часа в сутки. Решаем любые сложные ситуации на погрузке, выгрузке или в пути. Вы никогда не останетесь одни на трассе.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Блок FAQ (аккордеон) -->
+    <section class="faq">
+        <div class="container">
+            <h2 class="section-title">Часто задаваемые вопросы</h2>
+            <div class="faq-container">
+
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        Как именно вы ищете груз?
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-content">
+                        <div class="faq-content-inner">
+                            Мы используем собственные логистические базы, прямые контракты с крупнейшими производствами и торговыми сетями, а также премиум-аккаунты на закрытых транспортных биржах. Подбираем оптимальный маршрут под ваши параметры.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        Какая у вас комиссия за работу?
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-content">
+                        <div class="faq-content-inner">
+                            Наша комиссия прозрачна и фиксирована — она составляет от 5% до 8% в зависимости от сложности маршрута и типа груза. Никаких скрытых платежей, вы всегда видите чистую сумму вашего заработка до подписания заявки.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        Нужно ли водителю оформлять ИП или Самозанятость?
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-content">
+                        <div class="faq-content-inner">
+                            Мы работаем как с юридическими лицами (ИП, ООО), так и с самозанятыми водителями со своим грузовым автотранспортом. Если у вас нет статуса, наш юридический отдел поможет быстро и бесплатно открыть Самозанятость или ИП.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        Как быстро происходит оплата за выполненный рейс?
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-content">
+                        <div class="faq-content-inner">
+                            Мы предлагаем несколько вариантов расчёта: стандартный (по оригиналам документов в течение 5-7 банковских дней) или быстрый платёж на карту/расчетный счет сразу после выгрузки и отправки фото ТТН с отметкой.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Блок с формой заявки -->
+    <section class="order-form-section" id="order">
+        <div class="container">
+            <h2 class="section-title">Оставьте заявку на подбор груза</h2>
+            <div class="form-wrapper industrial-border">
+                <!-- Действие формы настроено на FormSubmit с плейсхолдером вашего email -->
+                <form action="https://formsubmit.co/ваш@email.ru" method="POST">
+                    
+                    <!-- Дополнительные настройки FormSubmit, чтобы пользователь возвращался обратно или не капчило (опционально) -->
+                    <input type="hidden" name="_subject" value="Новая заявка с сайта Сталинград Логистика">
+                    <input type="hidden" name="_captcha" value="false">
+
+                    <div class="form-group">
+                        <label for="name">Ваше Имя</label>
+                        <input type="text" id="name" name="Имя" class="form-control" placeholder="Иван Петров" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Телефон</label>
+                        <input type="tel" id="phone" name="Телефон" class="form-control" placeholder="+7 (999) 123-45-67" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="city">Город отправления / Нахождение машины</label>
+                        <input type="text" id="city" name="Город_отправления" class="form-control" placeholder="Волгоград, Москва..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="truck">Тип кузова</label>
+                        <select id="truck" name="Тип_кузова" class="form-control" required>
+                            <option value="" disabled selected>Выберите тип кузова</option>
+                            <option value="Тент / Штора">Тент / Штора</option>
+                            <option value="Рефрижератор">Рефрижератор</option>
+                            <option value="Изотерм">Изотерм</option>
+                            <option value="Бортовой / Шаланда">Бортовой / Шаланда</option>
+                            <option value="Самосвал">Самосвал</option>
+                            <option value="Другой">Другой грузовой транспорт</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-gold">Найти прибыльный груз</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Футер -->
+    <footer>
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <h4>Контакты</h4>
+                <p>Телефон: <a href="tel:+78005553535">8 (800) 555-35-35</a></p>
+                <p>Email: info@stalingrad-logistics.ru</p>
+                <p>Режим работы диспетчерской: Круглосуточно 24/7</p>
+            </div>
+            <div class="footer-col">
+                <h4>Реквизиты компании</h4>
+                <p>ООО "Сталинград Логистик Групп"</p>
+                <p>ИНН: 343500000000 (Заглушка)</p>
+                <p>ОГРН: 1263435000000 (Заглушка)</p>
+            </div>
+            <div class="footer-col">
+                <h4>Документы</h4>
+                <p><a href="#policy" onclick="alert('Здесь будет текст политики конфиденциальности в соответствии с ФЗ-152.'); return false;">Политика конфиденциальности</a></p>
+                <p><a href="#terms" onclick="alert('Здесь будет текст пользовательского соглашения.'); return false;">Пользовательское соглашение</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Логистическая компания "Сталинград". Все права защищены. Разработано в индустриальном стиле.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript для работы аккордеона FAQ -->
+    <script>
+        document.querySelectorAll('.faq-trigger').forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const parent = trigger.parentElement;
+                const content = trigger.nextElementSibling;
+                
+                // Проверяем, активен ли уже этот элемент
+                const isActive = parent.classList.contains('active');
+                
+                // Закрываем все открытые вкладки (опционально для поведения классического аккордеона)
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                    item.querySelector('.faq-content').style.maxHeight = null;
+                });
+                
+                // Если элемент не был активен, открываем его
+                if (!isActive) {
+                    parent.classList.add('active');
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
